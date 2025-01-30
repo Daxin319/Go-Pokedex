@@ -1,3 +1,3 @@
-module github.com/Daxin319/Go-Pokedex/apiLogic
+module apiLogic
 
 go 1.23.5
