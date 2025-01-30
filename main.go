@@ -23,12 +23,12 @@ func main() {
 		"map": {
 			name:        "map",
 			description: "Displays the next of 20 regions in the Pokemon world",
-			callback:    apilogic.commandMap,
+			callback:    apilogic.CommandMap,
 		},
 		"mapb": {
 			name:        "mapb",
 			description: "Displays the previous 20 regions in the Pokemon world",
-			callback:    apilogic.commandMapB,
+			callback:    apilogic.CommandMapB,
 		},
 	}
 	supportedCommands["help"] = cliCommand{

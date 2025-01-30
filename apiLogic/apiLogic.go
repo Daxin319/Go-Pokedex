@@ -21,10 +21,10 @@ type Config struct {
 	PreviousURL string
 }
 
-func commandMap(c *Config) error {
+func CommandMap(c *Config) error {
 	var url string
-	if c.nextURL != "" {
-		url = c.nextURL
+	if c.NextURL != "" {
+		url = c.NextURL
 	} else {
 		url = "https://pokeapi.co/api/v2/location-area/"
 	}
@@ -49,21 +49,21 @@ func commandMap(c *Config) error {
 		fmt.Println(area.Name)
 	}
 	if locations.Previous != nil {
-		c.previousURL = *locations.Previous
+		c.PreviousURL = *locations.Previous
 	} else {
-		c.previousURL = url
+		c.PreviousURL = url
 	}
-	c.nextURL = locations.Next
+	c.NextURL = locations.Next
 	return nil
 }
-func commandMapB(c *Config) error {
+func CommandMapB(c *Config) error {
 	var url string
-	if c.previousURL == "" || c.previousURL == "https://pokeapi.co/api/v2/location-area/" {
+	if c.PreviousURL == "" || c.PreviousURL == "https://pokeapi.co/api/v2/location-area/" {
 		fmt.Println("You are on the first page")
-		c.nextURL = "https://pokeapi.co/api/v2/location-area/"
+		c.NextURL = "https://pokeapi.co/api/v2/location-area/"
 		return nil
 	} else {
-		url = c.previousURL
+		url = c.PreviousURL
 	}
 	resp, err := http.Get(url)
 	if err != nil {
@@ -85,11 +85,11 @@ func commandMapB(c *Config) error {
 	for _, area := range locations.Results {
 		fmt.Println(area.Name)
 	}
-	c.nextURL = locations.Next
+	c.NextURL = locations.Next
 	if locations.Previous != nil {
-		c.previousURL = *locations.Previous
+		c.PreviousURL = *locations.Previous
 	} else {
-		c.previousURL = ""
+		c.PreviousURL = ""
 	}
 	return nil
 }
