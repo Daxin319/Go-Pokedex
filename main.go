@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/Daxin319/Go-Pokedex/apiLogic"
 )
 
 func main() {
