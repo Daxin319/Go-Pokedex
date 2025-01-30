@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	config := &apiLogic.Config{
+	config := &Config{
 		nextURL:     "",
 		previousURL: "",
 	}
@@ -24,12 +24,12 @@ func main() {
 		"map": {
 			name:        "map",
 			description: "Displays the next of 20 regions in the Pokemon world",
-			callback:    apiLogic.commandMap,
+			callback:    commandMap,
 		},
 		"mapb": {
 			name:        "mapb",
 			description: "Displays the previous 20 regions in the Pokemon world",
-			callback:    apiLogic.commandMapB,
+			callback:    commandMapB,
 		},
 	}
 	supportedCommands["help"] = cliCommand{
@@ -62,16 +62,14 @@ type Locations struct {
 		URL  string `json:"url"`
 	} `json:"results"`
 }
-
 type Config struct {
 	nextURL     string
 	previousURL string
 }
-
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *apiLogic.Config) error
+	callback    func(c *Config) error
 }
 
 func cleanInput(text string) []string {
@@ -81,14 +79,14 @@ func cleanInput(text string) []string {
 
 }
 
-func commandExit(c *apiLogic.Config) error {
+func commandExit(c *Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(input map[string]cliCommand, c *apiLogic.Config) func(c *apiLogic.Config) error {
-	return func(c *apiLogic.Config) error {
+func commandHelp(input map[string]cliCommand, c *Config) func(c *Config) error {
+	return func(c *Config) error {
 		fmt.Print("Welcome to the Pokedex!\nUsage:\n\n\n")
 
 		for _, command := range input {
@@ -98,7 +96,6 @@ func commandHelp(input map[string]cliCommand, c *apiLogic.Config) func(c *apiLog
 		return nil
 	}
 }
-
 func commandMap(c *Config) error {
 	var url string
 	if c.nextURL != "" {
@@ -110,37 +107,30 @@ func commandMap(c *Config) error {
 	if err != nil {
 		return fmt.Errorf("error pulling location data from pokeapi")
 	}
-
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
-
 	if err != nil {
 		return fmt.Errorf("error reading response body")
 	}
 	if resp.StatusCode > 299 {
 		return fmt.Errorf("response failed with error code %d and \nbody: %s", resp.StatusCode, resp.Body)
 	}
-
 	locations := Locations{}
 	err = json.Unmarshal(body, &locations)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling json file")
 	}
-
 	for _, area := range locations.Results {
 		fmt.Println(area.Name)
 	}
-
 	if locations.Previous != nil {
 		c.previousURL = *locations.Previous
 	} else {
 		c.previousURL = url
 	}
 	c.nextURL = locations.Next
-
 	return nil
 }
-
 func commandMapB(c *Config) error {
 	var url string
 	if c.previousURL == "" || c.previousURL == "https://pokeapi.co/api/v2/location-area/" {
@@ -154,33 +144,27 @@ func commandMapB(c *Config) error {
 	if err != nil {
 		return fmt.Errorf("error pulling location data from pokeapi")
 	}
-
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
-
 	if err != nil {
 		return fmt.Errorf("error reading response body")
 	}
 	if resp.StatusCode > 299 {
 		return fmt.Errorf("response failed with error code %d and \nbody: %s", resp.StatusCode, resp.Body)
 	}
-
 	locations := Locations{}
 	err = json.Unmarshal(body, &locations)
 	if err != nil {
 		return fmt.Errorf("error unmarshaling json file")
 	}
-
 	for _, area := range locations.Results {
 		fmt.Println(area.Name)
 	}
-
 	c.nextURL = locations.Next
 	if locations.Previous != nil {
 		c.previousURL = *locations.Previous
 	} else {
 		c.previousURL = ""
 	}
-
 	return nil
 }
