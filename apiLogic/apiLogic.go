@@ -1,4 +1,4 @@
-package apiLogic
+package apilogic
 
 import (
 	"encoding/json"
