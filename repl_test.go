@@ -28,7 +28,7 @@ func TestCleanInput(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		actual := CleanInput(c.input)
+		actual := cleanInput(c.input)
 		if len(actual) != len(c.expected) {
 			t.Errorf("CleanInput(%q) = %v, want %v", c.input, actual, c.expected)
 		}
