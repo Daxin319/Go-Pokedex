@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/Daxin319/Go-Pokedex/apiLogic"
 )
 
 func main() {
-	config := &Config{
+	config := &apiLogic.Config{
 		nextURL:     "",
 		previousURL: "",
 	}
@@ -21,12 +23,12 @@ func main() {
 		"map": {
 			name:        "map",
 			description: "Displays the next of 20 regions in the Pokemon world",
-			callback:    commandMap,
+			callback:    apiLogic.commandMap,
 		},
 		"mapb": {
 			name:        "mapb",
 			description: "Displays the previous 20 regions in the Pokemon world",
-			callback:    commandMapB,
+			callback:    apiLogic.commandMapB,
 		},
 	}
 	supportedCommands["help"] = cliCommand{
@@ -53,7 +55,7 @@ func main() {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *Config) error
+	callback    func(c *apiLogic.Config) error
 }
 
 func cleanInput(text string) []string {
@@ -63,14 +65,14 @@ func cleanInput(text string) []string {
 
 }
 
-func commandExit(c *Config) error {
+func commandExit(c *apiLogic.Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(input map[string]cliCommand, c *Config) func(c *Config) error {
-	return func(c *Config) error {
+func commandHelp(input map[string]cliCommand, c *apiLogic.Config) func(c *apiLogic.Config) error {
+	return func(c *apiLogic.Config) error {
 		fmt.Print("Welcome to the Pokedex!\nUsage:\n\n\n")
 
 		for _, command := range input {
