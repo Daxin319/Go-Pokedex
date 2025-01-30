@@ -1,3 +1,3 @@
-module github.com/Daxin319/Go-Pokedex
+module GitHub/go-pokedex
 
 go 1.23.5
