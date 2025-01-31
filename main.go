@@ -16,6 +16,7 @@ func main() {
 	config := &apilogic.Config{
 		NextURL:     "",
 		PreviousURL: "",
+		Area:        "",
 	}
 	supportedCommands := map[string]cliCommand{
 		"exit": {
@@ -33,6 +34,11 @@ func main() {
 			description: "Displays the previous 20 regions in the Pokemon world",
 			callback:    apilogic.CommandMapB,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Allows you to see a list of pokemon found in your selected area with the syntax `explore name_of_region`",
+			callback:    apilogic.CommandExplore,
+		},
 	}
 	supportedCommands["help"] = cliCommand{
 		name:        "help",
@@ -46,6 +52,9 @@ func main() {
 		scanner.Scan()
 		input := cleanInput(scanner.Text())
 		if command, ok := supportedCommands[input[0]]; ok {
+			if len(input) > 1 {
+				config.Area = input[1]
+			}
 			if err := command.callback(cache, config); err != nil {
 				fmt.Println(err)
 			}
@@ -68,7 +77,7 @@ func cleanInput(text string) []string {
 
 }
 
-func commandExit(_ *pokecache.Cache, c *apilogic.Config) error {
+func commandExit(_ *pokecache.Cache, _ *apilogic.Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil

@@ -18,9 +18,20 @@ type Locations struct {
 		URL  string `json:"url"`
 	} `json:"results"`
 }
+
+type Area struct {
+	PokemonEncounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"pokemon"`
+	} `json:"pokemon_encounters"`
+}
+
 type Config struct {
 	NextURL     string
 	PreviousURL string
+	Area        string
 }
 
 func CommandMap(cache *pokecache.Cache, c *Config) error {
@@ -76,6 +87,25 @@ func CommandMapB(cache *pokecache.Cache, c *Config) error {
 		c.PreviousURL = *locations.Previous
 	} else {
 		c.PreviousURL = ""
+	}
+	return nil
+}
+
+func CommandExplore(cache *pokecache.Cache, c *Config) error {
+	areaURL := "https://pokeapi.co/api/v2/location-area/" + c.Area + "/"
+	body, err := fetchDataWithCache(cache, areaURL)
+	if err != nil {
+		return fmt.Errorf("error fetching data from api")
+	}
+	area := Area{}
+	err = json.Unmarshal(body, &area)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling json file")
+	}
+	fmt.Printf("\nExploring %s!\n\n", c.Area)
+	fmt.Printf("The following pokemon can be found in %s:\n\n", c.Area)
+	for _, encounter := range area.PokemonEncounters {
+		fmt.Println("- " + encounter.Pokemon.Name)
 	}
 	return nil
 }
