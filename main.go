@@ -71,7 +71,7 @@ func commandExit(c *apilogic.Config) error {
 	return nil
 }
 
-func commandHelp(input map[string]cliCommand, c *apilogic.Config) func(c *apilogic.Config) error {
+func commandHelp(input map[string]cliCommand, _ *apilogic.Config) func(c *apilogic.Config) error {
 	return func(c *apilogic.Config) error {
 		fmt.Print("Welcome to the Pokedex!\nUsage:\n\n\n")
 
