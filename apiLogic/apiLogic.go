@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 
 	pokecache "github.com/Daxin319/Go-Pokedex/internal"
@@ -33,12 +34,284 @@ type Config struct {
 	NextURL     string
 	PreviousURL string
 	Area        string
+	Pokemon     string
+}
+
+type Pokemon struct {
+	Abilities []struct {
+		Ability struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"ability"`
+		IsHidden bool `json:"is_hidden"`
+		Slot     int  `json:"slot"`
+	} `json:"abilities"`
+	BaseExperience int `json:"base_experience"`
+	Cries          struct {
+		Latest string `json:"latest"`
+		Legacy string `json:"legacy"`
+	} `json:"cries"`
+	Forms []struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"forms"`
+	GameIndices []struct {
+		GameIndex int `json:"game_index"`
+		Version   struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"version"`
+	} `json:"game_indices"`
+	Height    int `json:"height"`
+	HeldItems []struct {
+		Item struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"item"`
+		VersionDetails []struct {
+			Rarity  int `json:"rarity"`
+			Version struct {
+				Name string `json:"name"`
+				URL  string `json:"url"`
+			} `json:"version"`
+		} `json:"version_details"`
+	} `json:"held_items"`
+	ID                     int    `json:"id"`
+	IsDefault              bool   `json:"is_default"`
+	LocationAreaEncounters string `json:"location_area_encounters"`
+	Moves                  []struct {
+		Move struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"move"`
+		VersionGroupDetails []struct {
+			LevelLearnedAt  int `json:"level_learned_at"`
+			MoveLearnMethod struct {
+				Name string `json:"name"`
+				URL  string `json:"url"`
+			} `json:"move_learn_method"`
+			VersionGroup struct {
+				Name string `json:"name"`
+				URL  string `json:"url"`
+			} `json:"version_group"`
+		} `json:"version_group_details"`
+	} `json:"moves"`
+	Name          string `json:"name"`
+	Order         int    `json:"order"`
+	PastAbilities []any  `json:"past_abilities"`
+	PastTypes     []any  `json:"past_types"`
+	Species       struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"species"`
+	Sprites struct {
+		BackDefault      string `json:"back_default"`
+		BackFemale       string `json:"back_female"`
+		BackShiny        string `json:"back_shiny"`
+		BackShinyFemale  string `json:"back_shiny_female"`
+		FrontDefault     string `json:"front_default"`
+		FrontFemale      string `json:"front_female"`
+		FrontShiny       string `json:"front_shiny"`
+		FrontShinyFemale string `json:"front_shiny_female"`
+		Other            struct {
+			DreamWorld struct {
+				FrontDefault string `json:"front_default"`
+				FrontFemale  any    `json:"front_female"`
+			} `json:"dream_world"`
+			Home struct {
+				FrontDefault     string `json:"front_default"`
+				FrontFemale      string `json:"front_female"`
+				FrontShiny       string `json:"front_shiny"`
+				FrontShinyFemale string `json:"front_shiny_female"`
+			} `json:"home"`
+			OfficialArtwork struct {
+				FrontDefault string `json:"front_default"`
+				FrontShiny   string `json:"front_shiny"`
+			} `json:"official-artwork"`
+			Showdown struct {
+				BackDefault      string `json:"back_default"`
+				BackFemale       string `json:"back_female"`
+				BackShiny        string `json:"back_shiny"`
+				BackShinyFemale  any    `json:"back_shiny_female"`
+				FrontDefault     string `json:"front_default"`
+				FrontFemale      string `json:"front_female"`
+				FrontShiny       string `json:"front_shiny"`
+				FrontShinyFemale string `json:"front_shiny_female"`
+			} `json:"showdown"`
+		} `json:"other"`
+		Versions struct {
+			GenerationI struct {
+				RedBlue struct {
+					BackDefault      string `json:"back_default"`
+					BackGray         string `json:"back_gray"`
+					BackTransparent  string `json:"back_transparent"`
+					FrontDefault     string `json:"front_default"`
+					FrontGray        string `json:"front_gray"`
+					FrontTransparent string `json:"front_transparent"`
+				} `json:"red-blue"`
+				Yellow struct {
+					BackDefault      string `json:"back_default"`
+					BackGray         string `json:"back_gray"`
+					BackTransparent  string `json:"back_transparent"`
+					FrontDefault     string `json:"front_default"`
+					FrontGray        string `json:"front_gray"`
+					FrontTransparent string `json:"front_transparent"`
+				} `json:"yellow"`
+			} `json:"generation-i"`
+			GenerationIi struct {
+				Crystal struct {
+					BackDefault           string `json:"back_default"`
+					BackShiny             string `json:"back_shiny"`
+					BackShinyTransparent  string `json:"back_shiny_transparent"`
+					BackTransparent       string `json:"back_transparent"`
+					FrontDefault          string `json:"front_default"`
+					FrontShiny            string `json:"front_shiny"`
+					FrontShinyTransparent string `json:"front_shiny_transparent"`
+					FrontTransparent      string `json:"front_transparent"`
+				} `json:"crystal"`
+				Gold struct {
+					BackDefault      string `json:"back_default"`
+					BackShiny        string `json:"back_shiny"`
+					FrontDefault     string `json:"front_default"`
+					FrontShiny       string `json:"front_shiny"`
+					FrontTransparent string `json:"front_transparent"`
+				} `json:"gold"`
+				Silver struct {
+					BackDefault      string `json:"back_default"`
+					BackShiny        string `json:"back_shiny"`
+					FrontDefault     string `json:"front_default"`
+					FrontShiny       string `json:"front_shiny"`
+					FrontTransparent string `json:"front_transparent"`
+				} `json:"silver"`
+			} `json:"generation-ii"`
+			GenerationIii struct {
+				Emerald struct {
+					FrontDefault string `json:"front_default"`
+					FrontShiny   string `json:"front_shiny"`
+				} `json:"emerald"`
+				FireredLeafgreen struct {
+					BackDefault  string `json:"back_default"`
+					BackShiny    string `json:"back_shiny"`
+					FrontDefault string `json:"front_default"`
+					FrontShiny   string `json:"front_shiny"`
+				} `json:"firered-leafgreen"`
+				RubySapphire struct {
+					BackDefault  string `json:"back_default"`
+					BackShiny    string `json:"back_shiny"`
+					FrontDefault string `json:"front_default"`
+					FrontShiny   string `json:"front_shiny"`
+				} `json:"ruby-sapphire"`
+			} `json:"generation-iii"`
+			GenerationIv struct {
+				DiamondPearl struct {
+					BackDefault      string `json:"back_default"`
+					BackFemale       string `json:"back_female"`
+					BackShiny        string `json:"back_shiny"`
+					BackShinyFemale  string `json:"back_shiny_female"`
+					FrontDefault     string `json:"front_default"`
+					FrontFemale      string `json:"front_female"`
+					FrontShiny       string `json:"front_shiny"`
+					FrontShinyFemale string `json:"front_shiny_female"`
+				} `json:"diamond-pearl"`
+				HeartgoldSoulsilver struct {
+					BackDefault      string `json:"back_default"`
+					BackFemale       string `json:"back_female"`
+					BackShiny        string `json:"back_shiny"`
+					BackShinyFemale  string `json:"back_shiny_female"`
+					FrontDefault     string `json:"front_default"`
+					FrontFemale      string `json:"front_female"`
+					FrontShiny       string `json:"front_shiny"`
+					FrontShinyFemale string `json:"front_shiny_female"`
+				} `json:"heartgold-soulsilver"`
+				Platinum struct {
+					BackDefault      string `json:"back_default"`
+					BackFemale       string `json:"back_female"`
+					BackShiny        string `json:"back_shiny"`
+					BackShinyFemale  string `json:"back_shiny_female"`
+					FrontDefault     string `json:"front_default"`
+					FrontFemale      string `json:"front_female"`
+					FrontShiny       string `json:"front_shiny"`
+					FrontShinyFemale string `json:"front_shiny_female"`
+				} `json:"platinum"`
+			} `json:"generation-iv"`
+			GenerationV struct {
+				BlackWhite struct {
+					Animated struct {
+						BackDefault      string `json:"back_default"`
+						BackFemale       string `json:"back_female"`
+						BackShiny        string `json:"back_shiny"`
+						BackShinyFemale  string `json:"back_shiny_female"`
+						FrontDefault     string `json:"front_default"`
+						FrontFemale      string `json:"front_female"`
+						FrontShiny       string `json:"front_shiny"`
+						FrontShinyFemale string `json:"front_shiny_female"`
+					} `json:"animated"`
+					BackDefault      string `json:"back_default"`
+					BackFemale       string `json:"back_female"`
+					BackShiny        string `json:"back_shiny"`
+					BackShinyFemale  string `json:"back_shiny_female"`
+					FrontDefault     string `json:"front_default"`
+					FrontFemale      string `json:"front_female"`
+					FrontShiny       string `json:"front_shiny"`
+					FrontShinyFemale string `json:"front_shiny_female"`
+				} `json:"black-white"`
+			} `json:"generation-v"`
+			GenerationVi struct {
+				OmegarubyAlphasapphire struct {
+					FrontDefault     string `json:"front_default"`
+					FrontFemale      string `json:"front_female"`
+					FrontShiny       string `json:"front_shiny"`
+					FrontShinyFemale string `json:"front_shiny_female"`
+				} `json:"omegaruby-alphasapphire"`
+				XY struct {
+					FrontDefault     string `json:"front_default"`
+					FrontFemale      string `json:"front_female"`
+					FrontShiny       string `json:"front_shiny"`
+					FrontShinyFemale string `json:"front_shiny_female"`
+				} `json:"x-y"`
+			} `json:"generation-vi"`
+			GenerationVii struct {
+				Icons struct {
+					FrontDefault string `json:"front_default"`
+					FrontFemale  any    `json:"front_female"`
+				} `json:"icons"`
+				UltraSunUltraMoon struct {
+					FrontDefault     string `json:"front_default"`
+					FrontFemale      string `json:"front_female"`
+					FrontShiny       string `json:"front_shiny"`
+					FrontShinyFemale string `json:"front_shiny_female"`
+				} `json:"ultra-sun-ultra-moon"`
+			} `json:"generation-vii"`
+			GenerationViii struct {
+				Icons struct {
+					FrontDefault string `json:"front_default"`
+					FrontFemale  string `json:"front_female"`
+				} `json:"icons"`
+			} `json:"generation-viii"`
+		} `json:"versions"`
+	} `json:"sprites"`
+	Stats []struct {
+		BaseStat int `json:"base_stat"`
+		Effort   int `json:"effort"`
+		Stat     struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"stat"`
+	} `json:"stats"`
+	Types []struct {
+		Slot int `json:"slot"`
+		Type struct {
+			Name string `json:"name"`
+			URL  string `json:"url"`
+		} `json:"type"`
+	} `json:"types"`
+	Weight int `json:"weight"`
 }
 
 // conjunction junction, what's your function?
 
 // map command, displays page 1 of the area list and paginates +1 each subsequent call
-func CommandMap(cache *pokecache.Cache, c *Config) error {
+func CommandMap(cache *pokecache.Cache, _ *map[string]Pokemon, c *Config) error {
 	var url string
 	//set url for api pull
 	if c.NextURL != "" {
@@ -73,7 +346,7 @@ func CommandMap(cache *pokecache.Cache, c *Config) error {
 }
 
 // mapb command, moves back 1 page in the area list, does not loop first to last page but will loop last to first
-func CommandMapB(cache *pokecache.Cache, c *Config) error {
+func CommandMapB(cache *pokecache.Cache, _ *map[string]Pokemon, c *Config) error {
 	var url string
 	if c.PreviousURL == "" || c.PreviousURL == "https://pokeapi.co/api/v2/location-area/" {
 		fmt.Println("You are on the first page")
@@ -104,7 +377,7 @@ func CommandMapB(cache *pokecache.Cache, c *Config) error {
 }
 
 // explore command, returns the list of available pokemon in a user specified area
-func CommandExplore(cache *pokecache.Cache, c *Config) error {
+func CommandExplore(cache *pokecache.Cache, _ *map[string]Pokemon, c *Config) error {
 	//set the url for the api pull
 	areaURL := "https://pokeapi.co/api/v2/location-area/" + c.Area + "/"
 	//check cache for url and perform api pull if not present
@@ -124,6 +397,36 @@ func CommandExplore(cache *pokecache.Cache, c *Config) error {
 	fmt.Printf("The following pokemon can be found in %s:\n\n", c.Area)
 	for _, encounter := range area.PokemonEncounters {
 		fmt.Println("- " + encounter.Pokemon.Name)
+	}
+	return nil
+}
+
+// capture command, attempts to catch a specified pokemon
+func CommandCatch(cache *pokecache.Cache, m *map[string]Pokemon, c *Config) error {
+	//set the url for the api pull
+	pokemonURL := "https://pokeapi.co/api/v2/pokemon/" + c.Pokemon + "/"
+	//check cache for url and perform pull if absent
+	body, err := fetchDataWithCache(cache, pokemonURL)
+	if err != nil {
+		return fmt.Errorf("error fetching data from api")
+	}
+	//initialize struct to unmarshal json
+	target := Pokemon{}
+	//unmarshal the json
+	err = json.Unmarshal(body, &target)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling json file")
+	}
+	//print message to user and try to catch pokemon
+	fmt.Printf("Throwing a Pokeball at %s...\n\n", target.Name)
+	catchAttempt := rand.Intn(700)
+	if catchAttempt >= target.BaseExperience {
+		fmt.Printf("%s has been caught!\n", target.Name)
+		fmt.Printf("Adding %s to list of caught pokemon!\n\n", target.Name)
+		(*m)[pokemonURL] = target
+	} else {
+		fmt.Printf("Oh no! %s escaped!\n", target.Name)
+		fmt.Printf("Catch roll: %d, Base XP: %d\n\n", catchAttempt, target.BaseExperience)
 	}
 	return nil
 }

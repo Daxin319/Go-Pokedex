@@ -20,7 +20,11 @@ func main() {
 		NextURL:     "",
 		PreviousURL: "",
 		Area:        "",
+		Pokemon:     "",
 	}
+
+	// map of caught pokemon
+	caught := make(map[string]apilogic.Pokemon)
 
 	// a map of supported commands for the pokedex
 	supportedCommands := map[string]cliCommand{
@@ -44,6 +48,21 @@ func main() {
 			description: "Allows you to see a list of pokemon found in your selected area with the syntax `explore name_of_region`",
 			callback:    apilogic.CommandExplore,
 		},
+		"catch": {
+			name:        "catch",
+			description: "Attempt to catch a pokemon with the syntax `catch pokemon-name`",
+			callback:    apilogic.CommandCatch,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "Look at the information of a pokemon that you have captured.",
+			callback:    commandInspect,
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "check your total number of caught pokemon, and see a list of all caught pokemon",
+			callback:    commandPokedex,
+		},
 	}
 	// Had to add this one seperately because it's self-referential
 	supportedCommands["help"] = cliCommand{
@@ -64,9 +83,16 @@ func main() {
 		//if the command is valid, do commands
 		if command, ok := supportedCommands[input[0]]; ok {
 			if len(input) > 1 {
-				config.Area = input[1]
+				switch input[0] {
+				case "explore":
+					config.Area = input[1]
+				case "catch", "inspect":
+					config.Pokemon = input[1]
+				default:
+					continue
+				}
 			}
-			if err := command.callback(cache, config); err != nil {
+			if err := command.callback(cache, &caught, config); err != nil {
 				fmt.Println(err)
 			}
 		} else {
@@ -79,7 +105,7 @@ func main() {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(cache *pokecache.Cache, c *apilogic.Config) error
+	callback    func(cache *pokecache.Cache, m *map[string]apilogic.Pokemon, c *apilogic.Config) error
 }
 
 // Functionland
@@ -93,15 +119,15 @@ func cleanInput(text string) []string {
 }
 
 // exit the program
-func commandExit(_ *pokecache.Cache, _ *apilogic.Config) error {
+func commandExit(_ *pokecache.Cache, _ *map[string]apilogic.Pokemon, _ *apilogic.Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
 // help command, lists all valid commands and brief description of each
-func commandHelp(input map[string]cliCommand, _ *apilogic.Config) func(_ *pokecache.Cache, c *apilogic.Config) error {
-	return func(_ *pokecache.Cache, c *apilogic.Config) error {
+func commandHelp(input map[string]cliCommand, _ *apilogic.Config) func(_ *pokecache.Cache, _ *map[string]apilogic.Pokemon, c *apilogic.Config) error {
+	return func(_ *pokecache.Cache, _ *map[string]apilogic.Pokemon, c *apilogic.Config) error {
 		fmt.Print("Welcome to the Pokedex!\nUsage:\n\n\n")
 
 		for _, command := range input {
@@ -110,4 +136,37 @@ func commandHelp(input map[string]cliCommand, _ *apilogic.Config) func(_ *pokeca
 
 		return nil
 	}
+}
+
+// inspect command, lists information on caught pokemon
+func commandInspect(_ *pokecache.Cache, m *map[string]apilogic.Pokemon, c *apilogic.Config) error {
+	// set the key for the information lookup
+	key := "https://pokeapi.co/api/v2/pokemon/" + c.Pokemon + "/"
+	//check map for key and return data, return error if data does not exist
+	if data, ok := (*m)[key]; ok {
+		fmt.Printf("Name: %s\n", data.Name)
+		fmt.Printf("Height: %d\n", data.Height)
+		fmt.Printf("Weight: %d\n", data.Weight)
+		fmt.Printf("Stats:\n")
+		for _, stat := range data.Stats {
+			fmt.Printf("  -%s: %d\n", stat.Stat.Name, stat.BaseStat)
+		}
+		fmt.Printf("Types:\n")
+		for _, element := range data.Types {
+			fmt.Printf("  -%s\n", element.Type.Name)
+		}
+		return nil
+	} else {
+		return fmt.Errorf("you haven't caught that pokemon")
+	}
+}
+
+// pokedex command, prints a list of all caught pokemon and a total count
+func commandPokedex(_ *pokecache.Cache, m *map[string]apilogic.Pokemon, _ *apilogic.Config) error {
+	fmt.Printf("So far, you have caught %d pokemon!\n\n", len(*m))
+	fmt.Printf("Captured pokemon:\n")
+	for _, pokemon := range *m { // this doesn't need parens but (*m)[key] does? ugh
+		fmt.Printf("  -%s\n", pokemon.Name)
+	}
+	return nil
 }
