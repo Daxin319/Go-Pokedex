@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// inSTRUCTional media
 type Cache struct {
 	entry    map[string]cacheEntry
 	mu       sync.RWMutex
@@ -14,9 +15,11 @@ type Cache struct {
 type cacheEntry struct {
 	createdAt time.Time
 	val       []byte
-	ticker    <-chan time.Time
 }
 
+//weeeeeee need the func! Gotta have that func!
+
+// create a new cache and start reaploop goroutines
 func NewCache(interval time.Duration) *Cache {
 
 	cache := &Cache{
@@ -29,6 +32,7 @@ func NewCache(interval time.Duration) *Cache {
 	return cache
 }
 
+// add entries to cache
 func (c *Cache) Add(key string, val []byte) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -39,6 +43,7 @@ func (c *Cache) Add(key string, val []byte) {
 	}
 }
 
+// read entries from cache
 func (c *Cache) Get(key string) ([]byte, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -50,6 +55,7 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 	return entry.val, true
 }
 
+// remove cache entries older than interval specified in NewCache(interval time.Duration) *Cache
 func (c *Cache) ReapLoop() {
 	ticker := time.NewTicker(c.interval)
 	defer ticker.Stop()

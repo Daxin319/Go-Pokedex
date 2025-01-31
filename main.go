@@ -12,12 +12,17 @@ import (
 )
 
 func main() {
+	// create cache with 5 second memory
 	cache := pokecache.NewCache(5 * time.Second)
+
+	// initialize config with zero values
 	config := &apilogic.Config{
 		NextURL:     "",
 		PreviousURL: "",
 		Area:        "",
 	}
+
+	// a map of supported commands for the pokedex
 	supportedCommands := map[string]cliCommand{
 		"exit": {
 			name:        "exit",
@@ -40,17 +45,23 @@ func main() {
 			callback:    apilogic.CommandExplore,
 		},
 	}
+	// Had to add this one seperately because it's self-referential
 	supportedCommands["help"] = cliCommand{
 		name:        "help",
 		description: "Displays a help message",
 		callback:    commandHelp(supportedCommands, config),
 	}
 
+	//initialize scanner to wait for user input
 	scanner := bufio.NewScanner(os.Stdin)
+
+	//main loop
 	for {
 		fmt.Print("Pokedex > ")
 		scanner.Scan()
+		//"sanitize" the input by making it lowercase and separating by white space
 		input := cleanInput(scanner.Text())
+		//if the command is valid, do commands
 		if command, ok := supportedCommands[input[0]]; ok {
 			if len(input) > 1 {
 				config.Area = input[1]
@@ -64,12 +75,16 @@ func main() {
 	}
 }
 
+// Under conSTRUCTion
 type cliCommand struct {
 	name        string
 	description string
 	callback    func(cache *pokecache.Cache, c *apilogic.Config) error
 }
 
+// Functionland
+
+// do I have to explain this one?
 func cleanInput(text string) []string {
 	split := strings.Fields(strings.ToLower(text))
 
@@ -77,12 +92,14 @@ func cleanInput(text string) []string {
 
 }
 
+// exit the program
 func commandExit(_ *pokecache.Cache, _ *apilogic.Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
+// help command, lists all valid commands and brief description of each
 func commandHelp(input map[string]cliCommand, _ *apilogic.Config) func(_ *pokecache.Cache, c *apilogic.Config) error {
 	return func(_ *pokecache.Cache, c *apilogic.Config) error {
 		fmt.Print("Welcome to the Pokedex!\nUsage:\n\n\n")
