@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 
@@ -98,5 +99,102 @@ func TestReapLoop(t *testing.T) {
 	if ok {
 		t.Errorf("expected to not find key")
 		return
+	}
+}
+
+func TestAddGet2(t *testing.T) {
+	const interval = 5 * time.Second
+	cache := pokecache.NewCache(interval)
+
+	key := "testKey"
+	value := []byte("testValue")
+	cache.Add(key, value)
+
+	retrievedValue, ok := cache.Get(key)
+	if !ok {
+		t.Errorf("expected to find key %q in cache", key)
+	}
+	if string(retrievedValue) != string(value) {
+		t.Errorf("expected value %q, got %q", string(value), string(retrievedValue))
+	}
+}
+
+func TestExpiration(t *testing.T) {
+	const interval = 5 * time.Millisecond
+	const waitTime = interval + 5*time.Millisecond
+	cache := pokecache.NewCache(interval)
+
+	key := "testKey"
+	value := []byte("testValue")
+	cache.Add(key, value)
+
+	_, ok := cache.Get(key)
+	if !ok {
+		t.Errorf("expected to find key %q in cache", key)
+	}
+
+	time.Sleep(waitTime)
+
+	_, ok = cache.Get(key)
+	if ok {
+		t.Errorf("expected key %q to be expired and removed from cache", key)
+	}
+}
+
+func TestConcurrency(t *testing.T) {
+	const interval = 5 * time.Second
+	cache := pokecache.NewCache(interval)
+	var wg sync.WaitGroup
+
+	// Simulate concurrent access
+	for i := 0; i < 100000; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			key := fmt.Sprintf("key%d", i)
+			value := []byte(fmt.Sprintf("value%d", i))
+			cache.Add(key, value)
+
+			retrievedValue, ok := cache.Get(key)
+			if !ok {
+				t.Errorf("expected to find key %q in cache", key)
+			}
+			if string(retrievedValue) != string(value) {
+				t.Errorf("expected value %q, got %q", string(value), string(retrievedValue))
+			}
+		}(i)
+	}
+
+	wg.Wait()
+}
+
+func TestNonExistentKey(t *testing.T) {
+	const interval = 5 * time.Second
+	cache := pokecache.NewCache(interval)
+
+	key := "nonExistentKey"
+	_, ok := cache.Get(key)
+	if ok {
+		t.Errorf("expected key %q to not exist in cache", key)
+	}
+}
+
+func TestDuplicateKey(t *testing.T) {
+	const interval = 5 * time.Second
+	cache := pokecache.NewCache(interval)
+
+	key := "testKey"
+	value1 := []byte("value1")
+	cache.Add(key, value1)
+
+	value2 := []byte("value2")
+	cache.Add(key, value2)
+
+	retrievedValue, ok := cache.Get(key)
+	if !ok {
+		t.Errorf("expected to find key %q in cache", key)
+	}
+	if string(retrievedValue) != string(value2) {
+		t.Errorf("expected value %q, got %q", string(value2), string(retrievedValue))
 	}
 }

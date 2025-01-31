@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	pokecache "github.com/Daxin319/Go-Pokedex/internal"
 )
 
 type Locations struct {
@@ -21,24 +23,16 @@ type Config struct {
 	PreviousURL string
 }
 
-func CommandMap(c *Config) error {
+func CommandMap(cache *pokecache.Cache, c *Config) error {
 	var url string
 	if c.NextURL != "" {
 		url = c.NextURL
 	} else {
 		url = "https://pokeapi.co/api/v2/location-area/"
 	}
-	resp, err := http.Get(url)
+	body, err := fetchDataWithCache(cache, url)
 	if err != nil {
-		return fmt.Errorf("error pulling location data from pokeapi")
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("error reading response body")
-	}
-	if resp.StatusCode > 299 {
-		return fmt.Errorf("response failed with error code %d and \nbody: %s", resp.StatusCode, resp.Body)
+		return fmt.Errorf("error fetching data from api")
 	}
 	locations := Locations{}
 	err = json.Unmarshal(body, &locations)
@@ -56,7 +50,7 @@ func CommandMap(c *Config) error {
 	c.NextURL = locations.Next
 	return nil
 }
-func CommandMapB(c *Config) error {
+func CommandMapB(cache *pokecache.Cache, c *Config) error {
 	var url string
 	if c.PreviousURL == "" || c.PreviousURL == "https://pokeapi.co/api/v2/location-area/" {
 		fmt.Println("You are on the first page")
@@ -65,17 +59,9 @@ func CommandMapB(c *Config) error {
 	} else {
 		url = c.PreviousURL
 	}
-	resp, err := http.Get(url)
+	body, err := fetchDataWithCache(cache, url)
 	if err != nil {
-		return fmt.Errorf("error pulling location data from pokeapi")
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("error reading response body")
-	}
-	if resp.StatusCode > 299 {
-		return fmt.Errorf("response failed with error code %d and \nbody: %s", resp.StatusCode, resp.Body)
+		return fmt.Errorf("error fetching data from api")
 	}
 	locations := Locations{}
 	err = json.Unmarshal(body, &locations)
@@ -92,4 +78,33 @@ func CommandMapB(c *Config) error {
 		c.PreviousURL = ""
 	}
 	return nil
+}
+
+func fetchDataFromAPI(url string) ([]byte, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("error pulling location data from pokeapi")
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body")
+	}
+	if resp.StatusCode > 299 {
+		return nil, fmt.Errorf("response failed with error code %d and \nbody: %s", resp.StatusCode, resp.Body)
+	}
+	return body, nil
+
+}
+
+func fetchDataWithCache(cache *pokecache.Cache, url string) ([]byte, error) {
+	if data, ok := cache.Get(url); ok {
+		return data, nil
+	}
+	data, err := fetchDataFromAPI(url)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching data from API")
+	}
+	cache.Add(url, data)
+	return data, nil
 }

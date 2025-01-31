@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	apilogic "github.com/Daxin319/Go-Pokedex/apiLogic"
+	pokecache "github.com/Daxin319/Go-Pokedex/internal"
 )
 
 func main() {
+	cache := pokecache.NewCache(5 * time.Second)
 	config := &apilogic.Config{
 		NextURL:     "",
 		PreviousURL: "",
@@ -43,7 +46,7 @@ func main() {
 		scanner.Scan()
 		input := cleanInput(scanner.Text())
 		if command, ok := supportedCommands[input[0]]; ok {
-			if err := command.callback(config); err != nil {
+			if err := command.callback(cache, config); err != nil {
 				fmt.Println(err)
 			}
 		} else {
@@ -55,7 +58,7 @@ func main() {
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(c *apilogic.Config) error
+	callback    func(cache *pokecache.Cache, c *apilogic.Config) error
 }
 
 func cleanInput(text string) []string {
@@ -65,14 +68,14 @@ func cleanInput(text string) []string {
 
 }
 
-func commandExit(c *apilogic.Config) error {
+func commandExit(_ *pokecache.Cache, c *apilogic.Config) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func commandHelp(input map[string]cliCommand, _ *apilogic.Config) func(c *apilogic.Config) error {
-	return func(c *apilogic.Config) error {
+func commandHelp(input map[string]cliCommand, _ *apilogic.Config) func(_ *pokecache.Cache, c *apilogic.Config) error {
+	return func(_ *pokecache.Cache, c *apilogic.Config) error {
 		fmt.Print("Welcome to the Pokedex!\nUsage:\n\n\n")
 
 		for _, command := range input {
