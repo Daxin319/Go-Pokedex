@@ -7,7 +7,7 @@ import (
 
 type Cache struct {
 	entry    map[string]cacheEntry
-	mu       sync.Mutex
+	mu       sync.RWMutex
 	interval time.Duration
 }
 
@@ -37,12 +37,11 @@ func (c *Cache) Add(key string, val []byte) {
 		createdAt: time.Now(),
 		val:       val,
 	}
-	return
 }
 
 func (c *Cache) Get(key string) ([]byte, bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
 	entry, ok := c.entry[key]
 	if !ok {
@@ -52,10 +51,13 @@ func (c *Cache) Get(key string) ([]byte, bool) {
 }
 
 func (c *Cache) ReapLoop() {
-	for {
+	ticker := time.NewTicker(c.interval)
+	defer ticker.Stop()
+
+	for range ticker.C {
 		c.mu.Lock()
 		for key, entry := range c.entry {
-			if int(time.Since(entry.createdAt)) >= int(c.interval) {
+			if time.Since(entry.createdAt) > c.interval {
 				delete(c.entry, key)
 			}
 		}
